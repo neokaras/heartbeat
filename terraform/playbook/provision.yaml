@@ -1,0 +1,59 @@
+- hosts: all
+  tasks:
+    - name: Install Docker Prerequisites
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+
+    - name: Install Docker GPG key
+      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+
+    - name: Add Docker repo
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ansible_distribution_release}} stable
+
+    - name: Install Docker
+      apt:
+        name: "docker-ce"
+        state: present
+        update_cache: yes
+
+    - name: Start Docker
+      systemd:
+        state: started
+        name: docker
+
+    - name: Install docker-compose
+      apt:
+        name: "docker-compose"
+        state: present
+        update_cache: yes
+
+    - name: Add Dockerfile and docker-compose.yaml
+      copy:
+        src: "{{ item }}"
+        dest: /data/
+        mode: 0644
+      with_items:
+        - ../../Dockerfile
+        - ../../docker-compose.yaml  
+
+    - name: Add Heartbeat app
+      copy:
+        src: "{{ item }}"
+        dest: /data/app
+        mode: 0644
+      with_items:
+        - ../../app/heartbeat.py
+        - ../../app/requirements.txt
+
+    - name: Start Heartbeat app with docker-compose
+      command: /usr/bin/docker-compose up -d --build
+      args:
+        chdir: /data/

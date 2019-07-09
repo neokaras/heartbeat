@@ -1,0 +1,31 @@
+version: '2'
+
+networks:
+  heartbeat-net:
+    driver: bridge
+
+services:
+  redis:
+    image: 'bitnami/redis:latest'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - heartbeat-net
+    ports:
+      - 6379:6379
+    volumes:
+      - heartbeat-ttl:/data/ttl
+
+  heartbeat-app:
+    build: .
+    image: neokaras/heartbeat-app:v1
+    networks:
+      - heartbeat-net
+    ports:
+      - 9070:80
+    volumes:
+      - heartbeat-data:/data/heartbeat
+
+volumes:
+  heartbeat-ttl:
+  heartbeat-data:
